@@ -1,12 +1,11 @@
 package com.c203.altteulbe.friend.persistent.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import com.c203.altteulbe.friend.persistent.entity.Friendship;
 
-public interface FriendshipCustomRepository {
-	Page<Friendship> findAllByUserIdWithFriend(long userId, Pageable pageable);
+import java.util.List;
 
+public interface FriendshipCustomRepository {
 	boolean existsByUserAndFriend(Long userId, Long friendId);
+
+	List<Friendship> findAllByUserIdWithFriend(long userId);
 }

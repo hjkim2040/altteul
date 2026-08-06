@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +42,10 @@ public class FriendshipService {
 		List<FriendResponseDto> cachedFriendList = friendRedisService.getCachedFriendList(userId);
 		List<FriendResponseDto> friendList;
 		if (cachedFriendList.isEmpty()) {
-			Page<Friendship> friendships = friendshipRepository.findAllByUserIdWithFriend(
-				userId,
-				PageRequest.of(pageable.getPageNumber(),
-					pageable.getPageSize())
-			);
+			List<Friendship> friendships = friendshipRepository.findAllByUserIdWithFriend(userId);
 			friendList = friendships.stream()
-				.map(friendship -> FriendResponseDto.from(friendship, false)) // 초기 온라인 상태는 false로 설정
-				.toList();
+					.map(friendship -> FriendResponseDto.from(friendship, false))
+					.toList();
 			// 친구 정보 캐싱
 			friendRedisService.setFriendList(userId, friendList);
 		} else {
