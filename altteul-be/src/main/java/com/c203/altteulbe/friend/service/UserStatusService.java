@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.connection.StringRedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
@@ -30,7 +31,7 @@ public class UserStatusService {
 		validateUserId(userId);
 		try {
 			String key = RedisKeys.getUserStatusKey(userId);
-			redisTemplate.opsForValue().set(key, "online");
+			redisTemplate.opsForValue().set(key, "online", 90, TimeUnit.SECONDS);
 			log.info("isOnline: {}", redisTemplate.hasKey(key));
 		} catch (RedisConnectionException e) {
 			log.error("Redis 연결 실패: {}", e.getMessage());
@@ -90,6 +91,26 @@ public class UserStatusService {
 				userIds::get, i -> Boolean.TRUE.equals(results.get(i)),
 				(existing, replace) -> replace
 			));
+	}
+
+	// heartbeat용
+	public void refreshOnline(Long userId) {
+		validateUserId(userId);
+		try {
+			String key = RedisKeys.getUserStatusKey(userId);
+			Boolean refreshed = redisTemplate.expire(key, 90, TimeUnit.SECONDS);
+			if (Boolean.FALSE.equals(refreshed)) {
+				// 키가 이미 만료되어 없어진 경우 → 다시 온라인으로 설정
+				log.warn("TTL이 만료되어 키가 없음. 재설정: userId={}", userId);
+				setUserOnline(userId);
+			}
+		} catch (RedisConnectionException e) {
+			log.error("Redis 연결 실패: {}", e.getMessage());
+			throw new RedisConnectionFailException();
+		} catch (Exception e) {
+			log.error("온라인 상태 갱신 중 오류 발생: {}", e.getMessage());
+			throw new UserStatusUpdateFailException();
+		}
 	}
 
 	private void validateUserId(Long userId) {
