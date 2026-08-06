@@ -13,21 +13,21 @@ spring:
     activate:
       on-profile: dev-mysql
   datasource:
-    url: jdbc:mysql://${LOCAL_MYSQL_HOST}:${MYSQL_BINDING_PORT}/${MYSQL_DATABASE}?autoReconnect=true&useUnicode=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://${LOCAL_MYSQL_HOST}:${MYSQL_BINDING_PORT}/${MYSQL_DATABASE}?autoReconnect=true&useUnicode=true&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
   sql:
     init:
-      mode: always
+      mode: never
   jpa:
     hibernate:
-      ddl-auto: create
-    show-sql: false
+      ddl-auto: none
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-      default_batch_fetch_size: 100
+        default_batch_fetch_size: 100
     open-in-view: false
     defer-datasource-initialization: true
 
