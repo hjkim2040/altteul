@@ -3,6 +3,7 @@ package com.c203.altteulbe.chat.web.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.c203.altteulbe.aws.util.S3Util;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,4 +27,16 @@ public class ChatroomDetailResponseDto {
 	private List<ChatMessageResponseDto> messages;  // 최근 60개 메시지
 
 	private LocalDateTime createdAt;  // 채팅방
+
+	public ChatroomDetailResponseDto withOnlineStatusAndImageUrl(boolean isOnline) {
+		return new ChatroomDetailResponseDto(
+				this.chatroomId,
+				this.friendId,
+				this.nickname,
+				S3Util.getImgUrl(this.profileImg),
+				isOnline,
+				this.messages,
+				this.createdAt
+		);
+	}
 }

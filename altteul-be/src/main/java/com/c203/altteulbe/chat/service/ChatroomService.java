@@ -1,8 +1,10 @@
 package com.c203.altteulbe.chat.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.c203.altteulbe.friend.service.UserStatusService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,14 +33,29 @@ public class ChatroomService {
 	private final UserRepository userRepository;
 	private final UserChatRoomRepository userChatRoomRepository;
 	private final FriendshipRepository friendshipRepository;
+	private final UserStatusService userStatusService;
 
 	public List<ChatroomListResponseDto> getAllChatrooms(Long userId) {
-		return chatroomRepository.findAllChatroomsByUserId(userId);
+		List<ChatroomListResponseDto> chatrooms = chatroomRepository.findAllChatroomsByUserId(userId);
+
+		List<Long> friendIds = chatrooms.stream()
+				.map(ChatroomListResponseDto::getFriendId)
+				.toList();
+		if (friendIds.isEmpty()) {
+			return chatrooms;
+		}
+		Map<Long, Boolean> onlineStatus = userStatusService.getBulkOnlineStatus(friendIds);
+
+		return chatrooms.stream()
+				.map(room -> room.withOnlineStatusAndImageUrl(
+								onlineStatus.getOrDefault(room.getFriendId(), false)))
+				.toList();
 	}
 
 	public ChatroomDetailResponseDto getChatroom(Long chatroomId, Long userId) {
-		return chatroomRepository.findChatroomById(chatroomId, userId)
-			.orElseThrow(NotFoundChatroomException::new);
+		ChatroomDetailResponseDto room = chatroomRepository.findChatroomById(chatroomId, userId)
+				.orElseThrow(NotFoundChatroomException::new);
+		return room.withOnlineStatusAndImageUrl(userStatusService.isUserOnline(room.getFriendId()));
 	}
 
 	// 채팅방 생성 혹은 조회
