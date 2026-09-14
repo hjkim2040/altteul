@@ -1,6 +1,5 @@
 package com.c203.altteulbe.friend.service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,6 @@ import com.c203.altteulbe.friend.web.dto.response.FriendRequestResponseDto;
 import com.c203.altteulbe.user.persistent.entity.User;
 import com.c203.altteulbe.user.persistent.repository.UserRepository;
 import com.c203.altteulbe.user.service.exception.NotFoundUserException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,26 +42,19 @@ public class FriendRequestService {
 
 	// 친구 요청 목록 조회
 	@Transactional
-	public PageResponse<FriendRequestResponseDto> getPendingRequestsFromRedis(Long userId, Pageable pageable) throws
-		JsonProcessingException {
+	public PageResponse<FriendRequestResponseDto> getPendingRequestsFromRedis(Long userId, Pageable pageable) {
 		userRepository.findByUserId(userId).orElseThrow(() -> {
 			log.error("유저 찾기 실패");
 			return new NotFoundUserException();
 		});
 		// 캐시된 친구 요청 목록 페이지네이션
-		List<FriendRequestResponseDto> cachedRequest = friendRedisService.getCachedFriendRequests(userId);
-		log.info("캐시된 친구 요청 목록: {}", Arrays.toString(cachedRequest.toArray()));
-		if (!cachedRequest.isEmpty()) {
-			Page<FriendRequestResponseDto> paginateResult = PaginateUtil.paginate(cachedRequest,
-				pageable.getPageNumber(), pageable.getPageSize());
-			return new PageResponse<>("friendRequests", paginateResult);
-		}
-		// 캐시된 친구 요청 목록이 없을 경우 db에서 가져오기
-		List<FriendRequestResponseDto> allRequest = getPendingFriendRequestsFromDB(userId);
-		log.info("DB에서 가져온 친구 요청 목록: {}", Arrays.toString(allRequest.toArray()));
-		// db에서 가져온 친구 요청 목록 캐싱
-		friendRedisService.cacheFriendRequests(userId, allRequest);
-		Page<FriendRequestResponseDto> paginateResult = PaginateUtil.paginate(allRequest,
+		List<FriendRequestResponseDto> requests = friendRedisService.getCachedFriendRequests(userId)
+				.orElseGet(() -> {
+					List<FriendRequestResponseDto> fromDb = getPendingFriendRequestsFromDB(userId);
+					friendRedisService.cacheFriendRequests(userId, fromDb);
+					return fromDb;
+				});
+		Page<FriendRequestResponseDto> paginateResult = PaginateUtil.paginate(requests,
 			pageable.getPageNumber(), pageable.getPageSize());
 		return new PageResponse<>("friendRequests", paginateResult);
 	}
@@ -80,19 +71,20 @@ public class FriendRequestService {
 
 	// 친구 신청 생성
 	@Transactional
-	public FriendRequestResponseDto createFriendRequest(Long fromUserId, Long toUserId) throws JsonProcessingException {
+	public FriendRequestResponseDto createFriendRequest(Long fromUserId, Long toUserId) {
 		User fromUser = userRepository.findById(fromUserId).orElseThrow(NotFoundUserException::new);
 		User toUser = userRepository.findById(toUserId).orElseThrow(NotFoundUserException::new);
 		validateFriendRequest(fromUser, toUser);
 		FriendRequest friendRequest = new FriendRequest(fromUser, toUser);
+		FriendRequest saved = friendRequestRepository.save(friendRequest);
 		// 친구 요청이 새로 생겼으니 이미 있던 친구 요청 목록 캐시 삭제
 		friendRedisService.invalidateFriendRequests(toUser.getUserId());
-		return FriendRequestResponseDto.from(friendRequestRepository.save(friendRequest));
+		return FriendRequestResponseDto.from(saved);
 	}
 
 	// 요청 처리
 	@Transactional
-	public void processRequest(Long requestId, Long userId, RequestStatus status) throws JsonProcessingException {
+	public void processRequest(Long requestId, Long userId, RequestStatus status) {
 		// 요청 조회 및 검증
 		FriendRequest request = friendRequestRepository.findById(requestId)
 			.orElseThrow(() -> {
@@ -114,7 +106,6 @@ public class FriendRequestService {
 
 		// 상태 업데이트
 		request.updateStatus(status);
-		friendRequestRepository.save(request);
 
 		// 수락된 경우 친구 관계 생성
 		if (status == RequestStatus.A) {
@@ -142,7 +133,7 @@ public class FriendRequestService {
 	}
 
 	// 친구 요청 검증
-	private void validateFriendRequest(User fromUser, User toUser) throws JsonProcessingException {
+	private void validateFriendRequest(User fromUser, User toUser) {
 		if (fromUser.getUserId().equals(toUser.getUserId())) {
 			throw new InvalidFriendRequestException();
 		}

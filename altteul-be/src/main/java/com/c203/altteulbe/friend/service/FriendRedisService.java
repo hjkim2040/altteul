@@ -1,7 +1,7 @@
 package com.c203.altteulbe.friend.service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,26 +23,34 @@ import lombok.extern.slf4j.Slf4j;
 public class FriendRedisService {
 
 	private final RedisTemplate<String, String> redisTemplate;
+	private final ObjectMapper objectMapper;
 
 	// 친구 리스트 조회
-	public List<FriendResponseDto> getCachedFriendList(Long userId) throws JsonProcessingException {
+	public Optional<List<FriendResponseDto>> getCachedFriendList(Long userId) {
 		String key = RedisKeys.getFriendListKey(userId);
 		String jsonFriendList = redisTemplate.opsForValue().get(key);
 		if (jsonFriendList == null) {
-			return new ArrayList<>(); // 캐시에 데이터가 없으면 빈 리스트 반환
+			return Optional.empty(); // 캐시 없음
 		}
-		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.readValue(jsonFriendList, new TypeReference<>() {
-		});
+		try {
+			return Optional.of(objectMapper.readValue(jsonFriendList, new TypeReference<>() {
+			}));
+		} catch (JsonProcessingException e) {
+			log.warn("친구 목록 캐시 역직렬화 실패, 캐시 미스로 처리: userId={}", userId, e);
+			redisTemplate.delete(key);   // 깨진 캐시는 삭제
+			return Optional.empty();
+		}
 	}
 
 	// 친구 리스트 저장
-	public void setFriendList(Long userId, List<FriendResponseDto> friendList) throws JsonProcessingException {
-		String key = RedisKeys.getFriendListKey(userId);
-		ObjectMapper objectMapper = new ObjectMapper();
-		String jsonFriendList = objectMapper.writeValueAsString(friendList); // json 형식으로 저장
-		redisTemplate.opsForValue().set(key, jsonFriendList, 30, TimeUnit.MINUTES);
-
+	public void setFriendList(Long userId, List<FriendResponseDto> friendList) {
+		try {
+			String jsonFriendList = objectMapper.writeValueAsString(friendList);
+			redisTemplate.opsForValue().set(RedisKeys.getFriendListKey(userId),
+					jsonFriendList, 30, TimeUnit.MINUTES);
+		} catch (JsonProcessingException e) {
+			log.warn("친구 목록 캐시 저장 실패: userId={}", userId, e);
+		}
 	}
 
 	// 친구 리스트 삭제
@@ -52,38 +60,52 @@ public class FriendRedisService {
 	}
 
 	// 친구 관계 확인
-	public Boolean checkFriendRelation(Long userId1, Long userId2) throws JsonProcessingException {
+	public boolean checkFriendRelation(Long userId1, Long userId2) {
 		String key = RedisKeys.getFriendRelationKey(userId1);
 		String value = redisTemplate.opsForValue().get(key);
 		if (value == null) {
 			return false;
 		}
-		ObjectMapper objectMapper = new ObjectMapper();
-		List<Long> friendListIds = objectMapper.readValue(value, new TypeReference<>() {
-		});
-		return friendListIds.contains(userId2); // 캐시에 없으면 기본적으로 false 반환
+		try {
+			List<Long> friendListIds = objectMapper.readValue(value, new TypeReference<>() {
+			});
+			return friendListIds.contains(userId2); // 캐시에 없으면 기본적으로 false 반환
+		} catch (JsonProcessingException e) {
+			log.warn("친구 관계 캐시 역직렬화 실패, DB 검증으로 위임: userId={}", userId1, e);
+			redisTemplate.delete(key);
+			return false;
+		}
+
+
 	}
 
 	// 친구 요청 목록 캐시 저장
-	public void cacheFriendRequests(Long userId, List<FriendRequestResponseDto> requests) throws
-		JsonProcessingException {
+	public void cacheFriendRequests(Long userId, List<FriendRequestResponseDto> requests) {
 		String key = RedisKeys.geFriendRequestKey(userId);
-		ObjectMapper objectMapper = new ObjectMapper();
-		String jsonFriendRequestList = objectMapper.writeValueAsString(requests);
-		redisTemplate.opsForValue().set(key, jsonFriendRequestList);
-		redisTemplate.expire(key, 30, TimeUnit.MINUTES); // TTL 설정
+		try {
+			String jsonFriendRequestList = objectMapper.writeValueAsString(requests);
+			redisTemplate.opsForValue().set(key, jsonFriendRequestList, 30, TimeUnit.MINUTES);
+		} catch (JsonProcessingException e) {
+			log.warn("친구 요청 캐시 저장 실패: userId={}", userId, e);
+		}
 	}
 
 	// 친구 요청 목록 캐시 조회
-	public List<FriendRequestResponseDto> getCachedFriendRequests(Long userId) throws JsonProcessingException {
+	public Optional<List<FriendRequestResponseDto>> getCachedFriendRequests(Long userId) {
 		String key = RedisKeys.geFriendRequestKey(userId);
 		String cachedData = redisTemplate.opsForValue().get(key);
 		if (cachedData == null) {
-			return new ArrayList<>();
+			return Optional.empty();
 		}
-		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.readValue(cachedData, new TypeReference<>() {
-		});
+		try {
+			return Optional.of(objectMapper.readValue(cachedData, new TypeReference<>() {
+			}));
+		} catch (JsonProcessingException e) {
+			log.warn("친구 요청 캐시 역직렬화 실패, 캐시 미스로 처리: userId={}", userId, e);
+			redisTemplate.delete(key);
+			return Optional.empty();
+		}
+
 	}
 
 	// 친구 요청 캐시 무효화

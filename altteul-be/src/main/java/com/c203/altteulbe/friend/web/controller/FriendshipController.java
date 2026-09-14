@@ -19,7 +19,6 @@ import com.c203.altteulbe.friend.service.FriendWSService;
 import com.c203.altteulbe.friend.service.FriendshipService;
 import com.c203.altteulbe.friend.web.dto.request.DeleteFriendRequestDto;
 import com.c203.altteulbe.friend.web.dto.response.FriendResponseDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,7 @@ public class FriendshipController {
 	public ApiResponseEntity<ResponseBody.Success<PageResponse<FriendResponseDto>>> getFriends(
 		@AuthenticationPrincipal Long id,
 		@PageableDefault(page = 0, size = 10) Pageable pageable
-	) throws JsonProcessingException {
+	) {
 		PageResponse<FriendResponseDto> friends = friendshipService.getFriendsList(id, pageable);
 		return ApiResponse.success(friends, HttpStatus.OK);
 	}
@@ -49,11 +48,8 @@ public class FriendshipController {
 		@AuthenticationPrincipal Long userId) {
 		friendshipService.deleteFriendship(userId, request.getFriendId());
 		// 친구 삭제 했을 경우 클라이언트에게 업데이트가 필요하다고 알림
-		log.info("현재 로그인한 유저 id: {}", userId); // 현재 로그인한 유저의 id
-		log.info("삭제 하고 싶은 유저의 id: {}", request.getFriendId()); // 삭제 하고 싶은 유저의 id
 		friendWSService.sendFriendListUpdateMessage(userId);
 		friendWSService.sendFriendListUpdateMessage(request.getFriendId());
-		log.info("삭제 완료");
 		return ApiResponse.success();
 	}
 }

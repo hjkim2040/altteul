@@ -100,19 +100,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 				if (StompCommand.CONNECT == accessor.getCommand()) {
 					Optional<String> tokenOptional = Optional.ofNullable(
 						accessor.getFirstNativeHeader("Authorization"));
-					log.info("received headers: {}", accessor.getFirstNativeHeader("Authorization"));
 					String jwtToken = tokenOptional
 						.filter(token -> token.startsWith("Bearer "))
 						.map(token -> token.substring(7))
 						.filter(token -> !jwtUtil.isExpired(token))
 						.orElseThrow(() -> new RuntimeException("유효하지 않은 토큰 입니다."));
-					log.info("jwtToken: {}", jwtToken);
 					Long userId = jwtUtil.getId(jwtToken);
-					log.info("userId: {}", userId);
 					accessor.getSessionAttributes().put("userId", userId);
-					log.info("accessor: {}", accessor);
-				} else if (StompCommand.SEND == accessor.getCommand()) {
-					log.info("Send command - accessor: {}", accessor);
 				}
 				return message;
 			}

@@ -16,7 +16,6 @@ import com.c203.altteulbe.friend.service.exception.FriendRelationNotFoundExcepti
 import com.c203.altteulbe.friend.web.dto.response.FriendResponseDto;
 import com.c203.altteulbe.user.persistent.repository.UserRepository;
 import com.c203.altteulbe.user.service.exception.NotFoundUserException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,21 +31,17 @@ public class FriendshipService {
 	private final FriendRedisService friendRedisService;
 
 	@Transactional(readOnly = true)
-	public PageResponse<FriendResponseDto> getFriendsList(Long userId, Pageable pageable) throws
-		JsonProcessingException {
+	public PageResponse<FriendResponseDto> getFriendsList(Long userId, Pageable pageable) {
 		userRepository.findByUserId(userId)
 			.orElseThrow(NotFoundUserException::new);
 
 		// 캐시된 친구 리스트 조회
-		List<FriendResponseDto> cachedFriendList = friendRedisService.getCachedFriendList(userId);
-		List<FriendResponseDto> friendList;
-		if (cachedFriendList.isEmpty()) {
-			friendList = friendshipRepository.findFriendDtosByUserId(userId);
-			// 친구 정보 캐싱
-			friendRedisService.setFriendList(userId, friendList);
-		} else {
-			friendList = cachedFriendList;
-		}
+		List<FriendResponseDto> friendList = friendRedisService.getCachedFriendList(userId)
+				.orElseGet(() -> {
+					List<FriendResponseDto> fromDb = friendshipRepository.findFriendDtosByUserId(userId);
+					friendRedisService.setFriendList(userId, fromDb);
+					return fromDb;
+				});
 
 		// 친구 관계이 있는 유저의 id들을 리스트로 만들기
 		List<Long> friendIds = friendList.stream()

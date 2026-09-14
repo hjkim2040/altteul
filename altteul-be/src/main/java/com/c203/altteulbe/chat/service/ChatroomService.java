@@ -57,7 +57,6 @@ public class ChatroomService {
 		Optional<ChatroomDetailResponseDto> existingChatroom =
 			chatroomRepository.findExistingChatroom(userId, friendId);
 		if (existingChatroom.isPresent()) {
-			log.info("이미 방이 존재");
 			return existingChatroom.get();
 		}
 
@@ -68,7 +67,6 @@ public class ChatroomService {
 			.orElseThrow(NotFoundUserException::new);
 
 		// 새 채팅방 생성
-		log.info("방 새로 생성");
 		Chatroom newChatroom = chatroomRepository.save(new Chatroom());
 
 		// 사용자와 친구를 채팅방에 추가
