@@ -43,10 +43,10 @@ public class FriendRequestService {
 	// 친구 요청 목록 조회
 	@Transactional
 	public PageResponse<FriendRequestResponseDto> getPendingRequestsFromRedis(Long userId, Pageable pageable) {
-		userRepository.findByUserId(userId).orElseThrow(() -> {
+		if (!userRepository.existsById(userId)) {
 			log.error("유저 찾기 실패");
-			return new NotFoundUserException();
-		});
+			throw new NotFoundUserException();
+		}
 		// 캐시된 친구 요청 목록 페이지네이션
 		List<FriendRequestResponseDto> requests = friendRedisService.getCachedFriendRequests(userId)
 				.orElseGet(() -> {

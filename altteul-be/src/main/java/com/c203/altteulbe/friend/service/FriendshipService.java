@@ -32,8 +32,9 @@ public class FriendshipService {
 
 	@Transactional(readOnly = true)
 	public PageResponse<FriendResponseDto> getFriendsList(Long userId, Pageable pageable) {
-		userRepository.findByUserId(userId)
-			.orElseThrow(NotFoundUserException::new);
+		if (!userRepository.existsById(userId)) {
+			throw new NotFoundUserException();
+		}
 
 		// 캐시된 친구 리스트 조회
 		List<FriendResponseDto> friendList = friendRedisService.getCachedFriendList(userId)
