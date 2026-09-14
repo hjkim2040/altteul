@@ -22,6 +22,13 @@ public class FriendResponseDto {
 
 	private Boolean isOnline;
 
+	public FriendResponseDto(Long userid, String nickname, String profileImg) {
+		this.userid = userid;
+		this.nickname = nickname;
+		this.profileImg = S3Util.getImgUrl(profileImg);
+		this.isOnline = false;
+	}
+
 	public static FriendResponseDto from(Friendship friendship, boolean isOnline) {
 		return FriendResponseDto.builder()
 			.userid(friendship.getFriend().getUserId())

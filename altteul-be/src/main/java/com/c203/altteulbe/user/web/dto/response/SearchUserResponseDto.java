@@ -18,6 +18,13 @@ public class SearchUserResponseDto {
 	private String profileImg;
 	private Boolean isOnline;
 
+	public SearchUserResponseDto(Long userId, String nickname, String profileImg) {
+		this.userId = userId;
+		this.nickname = nickname;
+		this.profileImg = S3Util.getImgUrl(profileImg);
+		this.isOnline = false;
+	}
+
 	public static SearchUserResponseDto from(User user, Boolean isOnline) {
 		return SearchUserResponseDto.builder()
 			.userId(user.getUserId())

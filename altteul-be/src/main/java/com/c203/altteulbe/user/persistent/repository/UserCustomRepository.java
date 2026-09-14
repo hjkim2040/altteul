@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.c203.altteulbe.user.persistent.entity.User;
+import com.c203.altteulbe.user.web.dto.response.SearchUserResponseDto;
 
 public interface UserCustomRepository {
 	boolean existsByUsername(String username);
@@ -20,6 +21,6 @@ public interface UserCustomRepository {
 
 	long countUsers();
 
-	List<User> searchByNickname(String nickname);
+	List<SearchUserResponseDto> searchByNickname(String nickname, Long currentUserId);
 
 }

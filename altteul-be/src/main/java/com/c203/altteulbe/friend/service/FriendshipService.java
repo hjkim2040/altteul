@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.c203.altteulbe.common.response.PageResponse;
 import com.c203.altteulbe.common.utils.PaginateUtil;
 import com.c203.altteulbe.friend.persistent.entity.FriendId;
-import com.c203.altteulbe.friend.persistent.entity.Friendship;
 import com.c203.altteulbe.friend.persistent.repository.FriendshipRepository;
 import com.c203.altteulbe.friend.service.exception.FriendRelationNotFoundException;
 import com.c203.altteulbe.friend.web.dto.response.FriendResponseDto;
@@ -42,10 +41,7 @@ public class FriendshipService {
 		List<FriendResponseDto> cachedFriendList = friendRedisService.getCachedFriendList(userId);
 		List<FriendResponseDto> friendList;
 		if (cachedFriendList.isEmpty()) {
-			List<Friendship> friendships = friendshipRepository.findAllByUserIdWithFriend(userId);
-			friendList = friendships.stream()
-					.map(friendship -> FriendResponseDto.from(friendship, false))
-					.toList();
+			friendList = friendshipRepository.findFriendDtosByUserId(userId);
 			// 친구 정보 캐싱
 			friendRedisService.setFriendList(userId, friendList);
 		} else {

@@ -30,14 +30,11 @@ public class UserService {
 	private final UserStatusService userStatusService;
 
 	public List<SearchUserResponseDto> searchUser(Long userId, String nickname) {
-		List<User> users = userRepository.searchByNickname(nickname)
-			.stream() // 자기 자신은 검색에서 제외
-			.filter(user -> !userId.equals(user.getUserId()))
-			.toList();
+		List<SearchUserResponseDto> users = userRepository.searchByNickname(nickname, userId);
 
 		// 모든 검색된 사용자의 ID 리스트 추출
 		List<Long> userIds = users.stream()
-			.map(User::getUserId)
+			.map(SearchUserResponseDto::getUserId)
 			.toList();
 
 		// 한 번에 모든 사용자의 온라인 상태 조회
@@ -45,7 +42,12 @@ public class UserService {
 
 		// DTO 변환 시 조회해둔 온라인 상태 맵 활용
 		return users.stream()
-			.map(user -> SearchUserResponseDto.from(user, onlineStatus.get(user.getUserId())))
+			.map(user -> new SearchUserResponseDto(
+					user.getUserId(),
+					user.getNickname(),
+					user.getProfileImg(),
+					onlineStatus.getOrDefault(user.getUserId(), false)
+			))
 			.toList();
 	}
 

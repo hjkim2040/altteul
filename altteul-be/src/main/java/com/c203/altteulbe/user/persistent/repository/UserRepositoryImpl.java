@@ -7,6 +7,8 @@ import static com.c203.altteulbe.user.persistent.entity.QUser.*;
 import java.util.List;
 import java.util.Optional;
 
+import com.c203.altteulbe.user.web.dto.response.SearchUserResponseDto;
+import com.querydsl.core.types.Projections;
 import org.springframework.stereotype.Repository;
 
 import com.c203.altteulbe.user.persistent.entity.User;
@@ -91,10 +93,16 @@ public class UserRepositoryImpl implements UserCustomRepository {
 	}
 
 	@Override
-	public List<User> searchByNickname(String nickname) {
+	public List<SearchUserResponseDto> searchByNickname(String nickname, Long currentUserId) {
 		return queryFactory
-			.selectFrom(user)
-			.where(user.nickname.containsIgnoreCase(nickname))
+			.select(Projections.constructor(SearchUserResponseDto.class,
+					user.userId,
+					user.nickname,
+					user.profileImg
+			))
+			.from(user)
+			.where(user.nickname.containsIgnoreCase(nickname)
+					.and(user.userId.ne(currentUserId)))
 			.fetch();
 	}
 }

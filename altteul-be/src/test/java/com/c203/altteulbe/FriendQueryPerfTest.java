@@ -1,9 +1,14 @@
 package com.c203.altteulbe;
 
+import com.c203.altteulbe.common.dto.RequestStatus;
 import com.c203.altteulbe.friend.persistent.entity.Friendship;
 import com.c203.altteulbe.friend.persistent.entity.QFriendship;
 import com.c203.altteulbe.friend.persistent.repository.FriendshipRepository;
+import com.c203.altteulbe.friend.service.FriendRequestService;
+import com.c203.altteulbe.friend.service.FriendshipService;
+import com.c203.altteulbe.friend.web.dto.response.FriendResponseDto;
 import com.c203.altteulbe.user.persistent.entity.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -14,6 +19,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +38,12 @@ import java.util.List;
 public class FriendQueryPerfTest{
     @Autowired
     private FriendshipRepository friendshipRepository;
+
+    @Autowired
+    private FriendshipService friendshipService;
+
+    @Autowired
+    private FriendRequestService friendRequestService;
 
     @Autowired
     private JPAQueryFactory queryFactory;
@@ -85,6 +98,39 @@ public class FriendQueryPerfTest{
         });
 
         System.out.println("fetchJoin 적용 쿼리 수 = " + count);
+    }
+
+    @Test
+    @DisplayName("DTO 변환")
+    void withDto() {
+        long count = measure(() -> {
+            friendshipRepository.findFriendDtosByUserId(TEST_USER_ID);
+        });
+
+        System.out.println("DTO 변환 쿼리 수 = " + count);
+    }
+
+    @Test
+    @DisplayName("조회 테스트")
+    void existTest() throws JsonProcessingException {
+        Pageable pageable = PageRequest.of(0, 10);
+        friendshipService.getFriendsList(1L, pageable);
+
+        System.out.println("성공");
+    }
+
+    @Test
+    @DisplayName("친구 신청 테스트")
+    void friendRequestTest() throws JsonProcessingException {
+        friendRequestService.createFriendRequest(946L, 947L);
+        System.out.println("성공");
+    }
+
+    @Test
+    @DisplayName("친구 테스트")
+    void friendTest() throws JsonProcessingException {
+        friendRequestService.processRequest(3L, 947L, RequestStatus.A);
+        System.out.println("성공");
     }
 
     @Test
