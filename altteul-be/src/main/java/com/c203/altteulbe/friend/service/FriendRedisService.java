@@ -60,23 +60,10 @@ public class FriendRedisService {
 	}
 
 	// 친구 관계 확인
-	public boolean checkFriendRelation(Long userId1, Long userId2) {
-		String key = RedisKeys.getFriendRelationKey(userId1);
-		String value = redisTemplate.opsForValue().get(key);
-		if (value == null) {
-			return false;
-		}
-		try {
-			List<Long> friendListIds = objectMapper.readValue(value, new TypeReference<>() {
-			});
-			return friendListIds.contains(userId2); // 캐시에 없으면 기본적으로 false 반환
-		} catch (JsonProcessingException e) {
-			log.warn("친구 관계 캐시 역직렬화 실패, DB 검증으로 위임: userId={}", userId1, e);
-			redisTemplate.delete(key);
-			return false;
-		}
-
-
+	public Optional<Boolean> checkFriendRelation(Long userId1, Long userId2) {
+		return getCachedFriendList(userId1)
+				.map(friends -> friends.stream()
+						.anyMatch(f -> userId2.equals(f.getUserid())));
 	}
 
 	// 친구 요청 목록 캐시 저장

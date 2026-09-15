@@ -1,6 +1,7 @@
 package com.c203.altteulbe.friend.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -107,7 +108,10 @@ public class FriendRequestService {
 		// 상태 업데이트
 		request.updateStatus(status);
 
-		// 수락된 경우 친구 관계 생성
+		// 요청 목록은 수락/거절 모두 상태가 바뀌므로 항상 무효화
+		friendRedisService.invalidateFriendRequests(userId);
+
+		// 수락된 경우 친구 관계 생성 + 친구 리스트 캐시 무효화
 		if (status == RequestStatus.A) {
 
 			validateFriendRequest(request.getFrom(), request.getTo());
@@ -124,12 +128,10 @@ public class FriendRequestService {
 			friendshipRepository.saveAll(
 				List.of(friendshipFromTo, friendshipToFrom)
 			);
+
+			friendRedisService.invalidateFriendList(userId);
+			friendRedisService.invalidateFriendList(request.getFrom().getUserId());
 		}
-		// Redis 캐시 업데이트를 별도 서비스로 위임
-		friendRedisService.invalidateCaches(
-			userId, // 로그인한 유저 id
-			request.getFrom().getUserId() // 친구 유저 id
-		);
 	}
 
 	// 친구 요청 검증
@@ -139,12 +141,16 @@ public class FriendRequestService {
 		}
 
 		// redis에서 친구인지 확인
-		if (friendRedisService.checkFriendRelation(fromUser.getUserId(), toUser.getUserId())) {
-			throw new AlreadyFriendException();
-		}
+		// 캐시에 친구 목록이 있으면 그걸로 판단, 없으면 DB로 확인
+		Optional<Boolean> cached = friendRedisService.checkFriendRelation(
+				fromUser.getUserId(), toUser.getUserId());
 
-		// redis에 없는 경우 db 확인
-		if (friendshipRepository.existsByUserAndFriend(fromUser.getUserId(), toUser.getUserId())) {
+		if (cached.isPresent()) {
+			if (cached.get()) {
+				throw new AlreadyFriendException();
+			}
+		} else if (friendshipRepository.existsByUserAndFriend(
+				fromUser.getUserId(), toUser.getUserId())) {
 			throw new AlreadyFriendException();
 		}
 
