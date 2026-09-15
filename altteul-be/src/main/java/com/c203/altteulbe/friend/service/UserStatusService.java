@@ -1,13 +1,10 @@
 package com.c203.altteulbe.friend.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.redis.connection.StringRedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -74,22 +71,23 @@ public class UserStatusService {
 
 	// 사용자들의 온라인 상태 한 번에 확인하기
 	public Map<Long, Boolean> getBulkOnlineStatus(List<Long> userIds) {
-		// Redis 파이프라인을 사용하여 여러 Redis 명령을 한 번에 처리하는 방법
-		List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>)connection -> {
-			StringRedisConnection stringConn = (StringRedisConnection)connection;
-			userIds.forEach(id ->
-				// exists 명령은 boolean 타입의 값을 반환
-				stringConn.exists(RedisKeys.getUserStatusKey(id))); // redis에 해당 키가 있는지 확인 (존재하면 온라인)
-			return null;
-		});
-		// // 결과를 userIds에 맞게 매핑하여 Map으로 반환
-		return IntStream
-			.range(0, userIds.size())
-			.boxed()
-			.collect(Collectors.toMap(
-				userIds::get, i -> Boolean.TRUE.equals(results.get(i)),
-				(existing, replace) -> replace
-			));
+		if (userIds.isEmpty()) {
+			return Map.of();
+		}
+
+		List<String> keys = userIds.stream()
+				.map(RedisKeys::getUserStatusKey)
+				.toList();
+
+		List<String> values = redisTemplate.opsForValue().multiGet(keys);
+
+		Map<Long, Boolean> result = new HashMap<>();
+		for (int i = 0; i < userIds.size(); i++) {
+			// values 자체가 null일 경우를 대비해 null 안전성 확보
+			boolean isOnline = values != null && values.get(i) != null;
+			result.put(userIds.get(i), isOnline);
+		}
+		return result;
 	}
 
 	// heartbeat용
