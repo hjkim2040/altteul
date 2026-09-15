@@ -53,6 +53,7 @@ public class FriendshipRepositoryImpl extends QuerydslRepositorySupport implemen
 				.from(friendship)
 				.join(friendship.friend, friendUser)
 				.where(friendship.id.userId.eq(userId))
+				.orderBy(friendUser.nickname.asc())
 				.fetch();
 	}
 }
