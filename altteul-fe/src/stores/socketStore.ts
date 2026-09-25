@@ -1,7 +1,7 @@
 // socketStore.ts
 import { create } from 'zustand';
 import SockJS from 'sockjs-client';
-import { Stomp, Frame, Message } from '@stomp/stompjs';
+import { Stomp, Frame, Message, CompatClient } from '@stomp/stompjs';
 import socketResponseMessage from 'types/socketResponseMessage';
 import useAuthStore from '@stores/authStore';
 import { SocketStore } from 'types/types';
@@ -13,6 +13,24 @@ const SOCKET_URL =
 
 const RECONNECT_DELAY = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
+const HEARTBEAT_INTERVAL = 30000; // 서버 TTL 90초의 1/3
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+const stopHeartbeat = () => {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+};
+
+const startHeartbeat = (client: CompatClient) => {
+  stopHeartbeat(); // 중복 타이머 방지
+  heartbeatTimer = setInterval(() => {
+    if (client.connected) {
+      client.publish({ destination: '/pub/user/heartbeat' });
+    }
+  }, HEARTBEAT_INTERVAL);
+};
 
 export const useSocketStore = create<SocketStore>((set, get) => ({
   client: null,
@@ -51,6 +69,11 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
         // 저장된 구독 정보가 있다면 복구
         get().restoreSubscriptions();
+        startHeartbeat(stompClient);
+      },
+
+      onWebSocketClose: () => {
+        stopHeartbeat();
       },
 
       onStompError: (frame: Frame) => {
@@ -77,10 +100,10 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     }
     get().resetConnection();
     sessionStorage.removeItem('wsConnected');
-    sessionStorage.removeItem('wsSubscriptions');
   },
 
   resetConnection: () => {
+    stopHeartbeat();
     set({
       client: null,
       connected: false,
