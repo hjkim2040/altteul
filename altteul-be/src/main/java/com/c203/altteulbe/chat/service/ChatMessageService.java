@@ -56,27 +56,22 @@ public class ChatMessageService {
 	@Transactional
 	public ChatMessageResponseDto saveMessage(Long chatroomId, ChatMessageRequestDto requestDto) {
 		validateMessageContent(requestDto.getContent());
-		Chatroom chatroom = chatroomRepository.findById(chatroomId).orElseThrow(NotFoundChatroomException::new);
-		User sender = userRepository.findByUserId(requestDto.getSenderId())
-			.orElseThrow(NotFoundUserException::new);
-		validateChatroomParticipant(chatroomId, sender.getUserId());
-		ChatMessage chatMessage = ChatMessageRequestDto.to(requestDto, chatroom, sender);
-		ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
-		return ChatMessageResponseDto.from(savedMessage);
+
+		String senderNickname = userChatRoomRepository
+				.findParticipantNickname(chatroomId, requestDto.getSenderId())
+				.orElseThrow(NotParticipantException::new);
+
+		Chatroom chatroom = chatroomRepository.getReferenceById(chatroomId);
+		User sender = userRepository.getReferenceById(requestDto.getSenderId());
+
+		ChatMessage saved = ChatMessageRequestDto.to(requestDto, chatroom, sender);
+		return ChatMessageResponseDto.of(saved, senderNickname);
 	}
 
 	// 메세지 검증
 	private void validateMessageContent(String content) {
 		if (content == null || content.trim().isEmpty()) {
 			throw new MessageContentRequiredException();
-		}
-	}
-
-	// 채팅방 참여자 검증
-	private void validateChatroomParticipant(Long chatroomId, Long userId) {
-		boolean isParticipant = userChatRoomRepository.existsByChatroom_ChatroomIdAndUser_UserId(chatroomId, userId);
-		if (!isParticipant) {
-			throw new NotParticipantException();
 		}
 	}
 }

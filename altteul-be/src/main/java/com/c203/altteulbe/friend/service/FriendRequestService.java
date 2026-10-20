@@ -62,12 +62,10 @@ public class FriendRequestService {
 
 	// db에서 친구 요청 목록 가져오기
 	private List<FriendRequestResponseDto> getPendingFriendRequestsFromDB(Long userId) {
-		return friendRequestRepository.findAllByToUserIdAndRequestStatus(
-				userId,
-				RequestStatus.P)
+		return friendRequestRepository.findPendingRequestDtos(userId)
 			.stream()
-			.map(FriendRequestResponseDto::from)
-			.collect(Collectors.toList());
+			.map(FriendRequestResponseDto::withImgUrl)
+			.toList();
 	}
 
 	// 친구 신청 생성

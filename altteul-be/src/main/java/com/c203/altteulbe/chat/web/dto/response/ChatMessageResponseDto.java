@@ -38,4 +38,15 @@ public class ChatMessageResponseDto {
 			.createdAt(chatMessage.getCreatedAt())
 			.build();
 	}
+
+	public static ChatMessageResponseDto of(ChatMessage chatMessage, String senderNickname) {
+		return ChatMessageResponseDto.builder()
+				.chatMessageId(chatMessage.getChatMessageId())
+				.senderId(chatMessage.getSender().getUserId())
+				.senderNickname(senderNickname)
+				.messageContent(chatMessage.getMessageContent())
+				.checked(chatMessage.isChecked())
+				.createdAt(chatMessage.getCreatedAt())
+				.build();
+	}
 }

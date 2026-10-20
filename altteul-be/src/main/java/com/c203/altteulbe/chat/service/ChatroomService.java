@@ -78,10 +78,8 @@ public class ChatroomService {
 		}
 
 		// 유저 찾기
-		User user = userRepository.findById(userId)
-			.orElseThrow(NotFoundUserException::new);
-		User friend = userRepository.findById(friendId)
-			.orElseThrow(NotFoundUserException::new);
+		User user = userRepository.getReferenceById(userId);
+		User friend = userRepository.getReferenceById(friendId);
 
 		// 새 채팅방 생성
 		Chatroom newChatroom = chatroomRepository.save(new Chatroom());

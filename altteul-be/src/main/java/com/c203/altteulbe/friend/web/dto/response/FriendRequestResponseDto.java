@@ -34,4 +34,9 @@ public class FriendRequestResponseDto {
 			.requestStatus(friendRequest.getRequestStatus())
 			.build();
 	}
+
+	public FriendRequestResponseDto withImgUrl() {
+		return new FriendRequestResponseDto(friendRequestId, fromUserId, fromUserNickname,
+				S3Util.getImgUrl(fromUserProfileImg), requestStatus);
+	}
 }
