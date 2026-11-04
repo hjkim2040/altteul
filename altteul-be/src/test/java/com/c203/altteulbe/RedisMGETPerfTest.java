@@ -21,7 +21,7 @@ import java.util.stream.LongStream;
 
 @SpringBootTest
 @ActiveProfiles("dev")
-public class RedisPipelinePerfTest {
+public class RedisMGETPerfTest {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
     @Autowired private UserStatusService userStatusService;
@@ -49,7 +49,7 @@ public class RedisPipelinePerfTest {
         }
 
         long individualTotal = 0;
-        long pipelineTotal = 0;
+        long MGETTotal = 0;
         int rounds = 10;
 
         for (int i = 0; i < rounds; i++) {
@@ -59,11 +59,11 @@ public class RedisPipelinePerfTest {
 
             s = System.nanoTime();
             userStatusService.getBulkOnlineStatus(userIds);
-            pipelineTotal += System.nanoTime() - s;
+            MGETTotal += System.nanoTime() - s;
         }
 
         System.out.println("개별 조회 평균 = " + (individualTotal / rounds / 1_000_000.0) + "ms");
-        System.out.println("Pipeline 평균 = " + (pipelineTotal / rounds / 1_000_000.0) + "ms");
+        System.out.println("MGET 평균 = " + (MGETTotal / rounds / 1_000_000.0) + "ms");
     }
 
     private void individual() {
