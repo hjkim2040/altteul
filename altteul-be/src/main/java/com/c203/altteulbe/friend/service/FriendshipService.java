@@ -56,8 +56,6 @@ public class FriendshipService {
 			.map(friend -> friend.updateOnlineStatus(onlineStatus.get(friend.getUserid())))
 			.toList();
 
-		// 친구 리스트 캐싱
-
 		Page<FriendResponseDto> paginateResult = PaginateUtil.paginate(responseList, pageable.getPageNumber(),
 			pageable.getPageSize());
 		return new PageResponse<>("friends", paginateResult);
