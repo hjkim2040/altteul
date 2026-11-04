@@ -9,7 +9,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import com.c203.altteulbe.friend.service.FriendRedisService;
-import com.c203.altteulbe.friend.service.UserStatusService;
+import com.c203.altteulbe.user.service.UserStatusService;
 import com.c203.altteulbe.game.service.GameLeaveService;
 import com.c203.altteulbe.game.web.dto.leave.request.GameLeaveRequestDto;
 import com.c203.altteulbe.room.persistent.repository.single.SingleRoomRedisRepository;

@@ -22,7 +22,7 @@ import com.c203.altteulbe.common.exception.BusinessException;
 import com.c203.altteulbe.common.utils.RedisKeys;
 import com.c203.altteulbe.friend.persistent.entity.FriendId;
 import com.c203.altteulbe.friend.persistent.repository.FriendshipRepository;
-import com.c203.altteulbe.friend.service.UserStatusService;
+import com.c203.altteulbe.user.service.UserStatusService;
 import com.c203.altteulbe.game.persistent.entity.Game;
 import com.c203.altteulbe.game.persistent.entity.problem.Problem;
 import com.c203.altteulbe.game.persistent.entity.problem.Testcase;

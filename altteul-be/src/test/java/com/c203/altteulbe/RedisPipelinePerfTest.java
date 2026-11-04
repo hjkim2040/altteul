@@ -1,7 +1,7 @@
 package com.c203.altteulbe;
 
 import com.c203.altteulbe.common.utils.RedisKeys;
-import com.c203.altteulbe.friend.service.UserStatusService;
+import com.c203.altteulbe.user.service.UserStatusService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

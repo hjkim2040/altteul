@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.c203.altteulbe.aws.service.S3Service;
 import com.c203.altteulbe.aws.util.S3Util;
 import com.c203.altteulbe.common.exception.BusinessException;
-import com.c203.altteulbe.friend.service.UserStatusService;
 import com.c203.altteulbe.user.persistent.entity.User;
 import com.c203.altteulbe.user.persistent.repository.UserRepository;
 import com.c203.altteulbe.user.service.exception.NotFoundUserException;

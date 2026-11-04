@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.c203.altteulbe.friend.service.UserStatusService;
+import com.c203.altteulbe.user.service.UserStatusService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +20,6 @@ import com.c203.altteulbe.friend.persistent.repository.FriendshipRepository;
 import com.c203.altteulbe.friend.service.exception.FriendRelationNotFoundException;
 import com.c203.altteulbe.user.persistent.entity.User;
 import com.c203.altteulbe.user.persistent.repository.UserRepository;
-import com.c203.altteulbe.user.service.exception.NotFoundUserException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

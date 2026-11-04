@@ -4,7 +4,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
-import com.c203.altteulbe.friend.service.UserStatusService;
+import com.c203.altteulbe.user.service.UserStatusService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

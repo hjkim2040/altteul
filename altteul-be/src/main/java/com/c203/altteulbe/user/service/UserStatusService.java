@@ -1,4 +1,4 @@
-package com.c203.altteulbe.friend.service;
+package com.c203.altteulbe.user.service;
 
 import java.util.HashMap;
 import java.util.List;

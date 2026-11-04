@@ -3,6 +3,7 @@ package com.c203.altteulbe.friend.service;
 import java.util.List;
 import java.util.Map;
 
+import com.c203.altteulbe.user.service.UserStatusService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
