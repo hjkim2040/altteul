@@ -1,10 +1,46 @@
+## 👤 개인 기여 — 김성찬 (Backend)
+
+> 6인 팀 프로젝트입니다. 아래는 제가 담당한 부분이며, 원본 팀 README는 그 아래에 그대로 두었습니다.
+> 
+> 📄 포트폴리오: [링크](https://trusting-gooseberry-30e.notion.site/Altteul-1fff2546fed481bfb6b5d6d65c030d62?source=copy_link)
+
+### 담당 범위
+- **친구** : 요청·수락·거절, 양방향 관계 생성·삭제, 목록 조회(캐싱 + 페이징)
+- **사용자 상태** : WebSocket 연결 기반 온라인/오프라인 관리, TTL 자동 만료 (DB 테이블 없이 Redis에만 저장)
+- **실시간 알림** : 친구 요청·관계 변경 시 STOMP 푸시
+- **채팅** : 1:1 채팅방 생성·조회, 메시지 송수신, 읽음 처리
+
+### 코드 위치
+- 기본 경로: altteul-be/src/main/java/com/c203/altteulbe/
+
+| 도메인 | 경로                                                              |
+|---|-----------------------------------------------------------------|
+| 친구 | [`friend/`](https://github.com/hjkim2040/altteul/tree/d61cd60d45ada3895ea86633b28c220156b88a27/altteul-be/src/main/java/com/c203/altteulbe/friend) |
+| 사용자 상태 | [`user/service/UserStatusService.java`](https://github.com/hjkim2040/altteul/blob/d61cd60d45ada3895ea86633b28c220156b88a27/altteul-be/src/main/java/com/c203/altteulbe/user/service/UserStatusService.java)                       |
+| 채팅 | [`chat/`](https://github.com/hjkim2040/altteul/tree/d61cd60d45ada3895ea86633b28c220156b88a27/altteul-be/src/main/java/com/c203/altteulbe/chat)     |
+
+### 주요 개선
+| 문제 | 해결 | 결과 | 코드                                                                                                                                                                                                                                                                                                                                                                                  |
+|---|---|---|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 친구 목록 조회 N+1 | DTO 프로젝션 | 쿼리 401회 → 1회 | [코드](https://github.com/hjkim2040/altteul/blob/3d482a276d0eea3654a6acc75a384612ba45618f/altteul-be/src/main/java/com/c203/altteulbe/friend/persistent/repository/FriendshipRepositoryImpl.java#L45-L58), [측정 테스트](https://github.com/hjkim2040/altteul/blob/c8e18fc698826f6c87ec0b24aad77c5e79d3c650/altteul-be/src/test/java/com/c203/altteulbe/FriendQueryPerfTest.java#L74-L111) |
+| 온라인 상태 조회 시 Redis N회 왕복 | 개별 EXISTS → MGET | 200건 148.6ms → 1.02ms | [코드](https://github.com/hjkim2040/altteul/blob/18788e9839fe5e7a34cbc9001d4e8fd85a9a61d3/altteul-be/src/main/java/com/c203/altteulbe/user/service/UserStatusService.java#L73-L91), [측정 테스트](https://github.com/hjkim2040/altteul/blob/d61cd60d45ada3895ea86633b28c220156b88a27/altteul-be/src/test/java/com/c203/altteulbe/RedisMGETPerfTest.java#L43-L71)                           |
+| 비정상 종료 시 유령 온라인 | TTL 90초 + heartbeat 갱신 | 최대 90초 내 자동 오프라인 | [TTL](https://github.com/hjkim2040/altteul/blob/18788e9839fe5e7a34cbc9001d4e8fd85a9a61d3/altteul-be/src/main/java/com/c203/altteulbe/user/service/UserStatusService.java#L27-L40), [heartbeat](https://github.com/hjkim2040/altteul/blob/18788e9839fe5e7a34cbc9001d4e8fd85a9a61d3/altteul-be/src/main/java/com/c203/altteulbe/user/service/UserStatusService.java#L94-L111)         |
+| 복합키 저장 시 불필요한 SELECT | Persistable 구현 | 저장 1건당 쿼리 2회 → 1회 | [코드](https://github.com/hjkim2040/altteul/blob/18788e9839fe5e7a34cbc9001d4e8fd85a9a61d3/altteul-be/src/main/java/com/c203/altteulbe/friend/persistent/entity/Friendship.java#L47-L50)                                                                                                                                                                                               |
+| 캐시·페이징 충돌로 2페이지 이후 누락 | 전체 목록 캐싱 + 앱 페이징 | 조회 누락 해소 | [코드](https://github.com/hjkim2040/altteul/blob/c8e18fc698826f6c87ec0b24aad77c5e79d3c650/altteul-be/src/main/java/com/c203/altteulbe/friend/service/FriendshipService.java#L34-L62)                                                                                                                                                                                                  |
+
+원인 분석과 측정 조건은 포트폴리오에 정리했습니다.
+
+> 프로젝트 종료(2025.02.20) 이후 커밋은 개인적으로 진행한 리팩토링입니다.
+
+---
+
 ## 💡 프로젝트 소개
 
 ![main](README_assets/main.gif)
 
 ### ⚙ 개요
 
-- 진행 기간 : 2025/1/13 ~ 2024/2/20
+- 진행 기간 : 2024/1/13 ~ 2024/2/20
 - 소개 : 알고리즘 배틀 사이트
 
 ### ⚙ 기획 배경
@@ -22,7 +58,7 @@
 | **박가희** |   FE, FE 리더   | 메인, 대전 기록, 팀전/개인전 IDE, 코드 제출 및 실행, 보너스 문제, 아이템, OpenVidu로 음성 공유, AI 코칭, 디자인 |
 | **장희현** |      FE       |          로그인, 로그아웃, 디자인, 채팅 모달 일부, 공통 컴포넌트 제작, 에러 페이지, PPT, 영상 제작           |
 | **진우석** | FE, BE, BE 리더 |                회원, 코드 공유, 채점 서버 연동, 게임 결과 반환, 랭킹 페이지 조회 및 검색                |
-| **김성찬** |      BE       |                친구 신청, 채팅, OpenVidu 서버 배포, 유저 검색, 팀전/개인전 나가기                 |
+| **김성찬** |      BE       |                    친구(요청, 수락, 거절, 목록 조회), 채팅, 온라인 상태 관리                     |
 | **김시아** |      BE       |               팀전/개인전 매칭, 게임 초대, 랭킹 데이터 처리 및 페이지 조회/검색 , S3 연동               |
 
 <br>
